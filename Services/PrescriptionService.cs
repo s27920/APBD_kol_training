@@ -37,6 +37,10 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<Prescription> InsertPrescription(PrescriptionDto dto)
     {
+        if (dto.DueDate > dto.Date)
+        {
+            throw new ConflictException("Incorrect date formats entered");
+        }
         if (!await _repository.CheckIfDoctorExistsAsync(dto.IdDoctor))
         {
             throw new NotFoundException("No doctor with such Id found");
