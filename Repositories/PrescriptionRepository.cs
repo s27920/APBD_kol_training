@@ -7,7 +7,8 @@ using kolWebApp.MOdels;
 
 public interface IPrescriptionRepository
 {
-    public Task<IEnumerable<Prescription>> GetAllPrescriptions(int? doctorId);
+    public Task<IEnumerable<Prescription>> GetAllPrescriptionsAsync(int? doctorId);
+    public Task<bool> CheckIfDoctorExistsAsync(int doctorId);
 
 }
 
@@ -24,7 +25,7 @@ public class PrescriptionRepository : IPrescriptionRepository
     /*tutaj pojawia się pewien dylemat ponieważ w aktualnej wersji poniższa funkcja łamie poniekąd zasdę 1 zadania
     z drugiej strony aktualna implementacja pozwala na zaoszczędzeniu przestrzeni i unika łamania DRY 
     czego skutkiem byłaby druga funckja robiąca to samo dla konkretnego lekarza*/
-    public async Task<IEnumerable<Prescription>> GetAllPrescriptions(int? doctorId)
+    public async Task<IEnumerable<Prescription>> GetAllPrescriptionsAsync(int? doctorId)
     {
         await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
         await connection.OpenAsync();
@@ -68,5 +69,14 @@ public class PrescriptionRepository : IPrescriptionRepository
 
         return prescriptionsRead;
     }
-    
+
+    public async Task<bool> CheckIfDoctorExistsAsync(int doctorId)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        var query = "SELECT * FROM Doctor WHERE @IdDoctor = IdDoctor";
+        await using var command = new SqlCommand(query, connection);
+        var rowsAffected = await command.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
+    }
 }

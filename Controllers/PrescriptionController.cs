@@ -20,13 +20,21 @@ public class PrescriptionController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPrescriptions()
     {
-        
+        return Ok(await _prescriptionService.GetAllPrescriptionAsync());
     }
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPrescriptionsById([FromQuery] int id)
     {
+        try
+        {
+            return Ok(await _prescriptionService.GetDoctorsPrescriptionsAsync(id));
+        }
+        catch (Exception e)
+        {
+            return NotFound(e);
+        }
         
     }
 }

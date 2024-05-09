@@ -1,3 +1,4 @@
+using kolWebApp.Exceptions;
 using kolWebApp.Repositories;
 
 namespace kolWebApp.Services;
@@ -20,11 +21,15 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<IEnumerable<Prescription>> GetAllPrescriptionAsync()
     {
-        return await _repository.GetAllPrescriptions(null);
+        return await _repository.GetAllPrescriptionsAsync(null);
     }
 
     public async Task<IEnumerable<Prescription>> GetDoctorsPrescriptionsAsync(int id)
     {
-        return await _repository.GetAllPrescriptions(id);
+        if (!_repository.CheckIfDoctorExistsAsync(id).Result)
+        {
+            throw new NotFoundException("No doctor with such Id found");
+        }
+        return await _repository.GetAllPrescriptionsAsync(id);
     }
 }
