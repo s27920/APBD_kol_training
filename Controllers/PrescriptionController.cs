@@ -55,6 +55,14 @@ public class PrescriptionController : ControllerBase
         }
     }
 
+    [HttpGet("{medicament}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> getMedicationInformation(string medicament)
+    {
+        return Ok(await _prescriptionService.getMedicationINformation(medicament));
+    }
+    
     [HttpPost("prescriptions")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]

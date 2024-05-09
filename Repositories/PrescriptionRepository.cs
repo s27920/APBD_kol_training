@@ -13,6 +13,7 @@ public interface IPrescriptionRepository
     public Task<bool> CheckIfPatientExistsAsync(int patientId);
     public Task<Prescription> InsertPrescription(PrescriptionDto dto);
     public Task<bool> InsertDoctor(DoctorDto dto);
+    public Task<MedicationDto> getMedicationInformation(string name);
 
 }
 
@@ -149,5 +150,30 @@ public class PrescriptionRepository : IPrescriptionRepository
             throw new ConflictException("transaction interrupted, rollback initiated");
         }
          
+    }
+
+    public async Task<MedicationDto> getMedicationInformation(string name)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        var query = "SELECT * FROM Medicament WHERE Name = @Name;";
+        await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@Name", name);
+        await using var reader = await command.ExecuteReaderAsync();
+        var idOrdinal = reader.GetOrdinal("IdMedicament");
+        var nameOrdinal = reader.GetOrdinal("Name");
+        var descriptionOrdinal = reader.GetOrdinal("Description");
+        var typeOrdinal = reader.GetOrdinal("Type");
+        if (reader.HasRows)
+        {
+            reader.Read();
+            int id = reader.GetInt32(idOrdinal);
+            string readName = reader.GetString(nameOrdinal);
+            string description = reader.GetString(descriptionOrdinal);
+            string type = reader.GetString(typeOrdinal);
+            return new MedicationDto() { IdMedicament = id, Name = readName, Description = description, type = type };
+        }
+
+        throw new NotFoundException("No medication under the provided name " + name + " found");
     }
 }

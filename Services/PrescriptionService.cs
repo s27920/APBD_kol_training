@@ -11,6 +11,7 @@ public interface IPrescriptionService
     public Task<IEnumerable<PrescriptionReadDto>> GetDoctorsPrescriptionsAsync(int id);
     public Task<Prescription> InsertPrescription(PrescriptionDto dto);
     public Task<bool> InsertDoctor(DoctorDto dto);
+    public Task<MedicationDto> getMedicationINformation(string name);
 }
 
 public class PrescriptionService : IPrescriptionService
@@ -58,5 +59,10 @@ public class PrescriptionService : IPrescriptionService
     public async Task<bool> InsertDoctor(DoctorDto dto)
     {
         return await _repository.InsertDoctor(dto);
+    }
+
+    public async Task<MedicationDto> getMedicationINformation(string name)
+    {
+        return await _repository.getMedicationInformation(name);
     }
 }
