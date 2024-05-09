@@ -10,6 +10,7 @@ public interface IPrescriptionService
     public Task<IEnumerable<PrescriptionReadDto>> GetAllPrescriptionAsync();
     public Task<IEnumerable<PrescriptionReadDto>> GetDoctorsPrescriptionsAsync(int id);
     public Task<Prescription> InsertPrescription(PrescriptionDto dto);
+    public Task<bool> InsertDoctor(DoctorDto dto);
 }
 
 public class PrescriptionService : IPrescriptionService
@@ -28,10 +29,10 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<IEnumerable<PrescriptionReadDto>> GetDoctorsPrescriptionsAsync(int id)
     {
-        if (!await _repository.CheckIfDoctorExistsAsync(id))
-        {
-            throw new NotFoundException("No doctor with such Id found");
-        }
+       if (! await _repository.CheckIfDoctorExistsAsync(id))
+       {
+           throw new NotFoundException("No doctor with such Id found");
+       }
         return await _repository.GetAllPrescriptionsAsync(id);
     }
 
@@ -52,5 +53,10 @@ public class PrescriptionService : IPrescriptionService
 
         return await _repository.InsertPrescription(dto);
 
+    }
+
+    public async Task<bool> InsertDoctor(DoctorDto dto)
+    {
+        return await _repository.InsertDoctor(dto);
     }
 }

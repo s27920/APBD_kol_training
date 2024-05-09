@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("kolWebApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a9e26f4dde042c3c8fbb5ac3073ed64b5aa6dacb")]
 [assembly: System.Reflection.AssemblyProductAttribute("kolWebApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("kolWebApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
