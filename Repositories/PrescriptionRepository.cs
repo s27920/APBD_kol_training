@@ -1,3 +1,4 @@
+using kolWebApp.Dtos;
 using kolWebApp.Exceptions;
 using kolWebApp.Services;
 using Microsoft.Data.SqlClient;
@@ -7,8 +8,10 @@ using kolWebApp.MOdels;
 
 public interface IPrescriptionRepository
 {
-    public Task<IEnumerable<Prescription>> GetAllPrescriptionsAsync(int? doctorId);
+    public Task<IEnumerable<PrescriptionReadDto>> GetAllPrescriptionsAsync(int? doctorId);
     public Task<bool> CheckIfDoctorExistsAsync(int doctorId);
+    public Task<bool> CheckIfPatientExistsAsync(int patientId);
+    public Task<Prescription> InsertPrescription(PrescriptionDto dto);
 
 }
 
@@ -25,7 +28,7 @@ public class PrescriptionRepository : IPrescriptionRepository
     /*tutaj pojawia się pewien dylemat ponieważ w aktualnej wersji poniższa funkcja łamie poniekąd zasdę 1 zadania
     z drugiej strony aktualna implementacja pozwala na zaoszczędzeniu przestrzeni i unika łamania DRY 
     czego skutkiem byłaby druga funckja robiąca to samo dla konkretnego lekarza*/
-    public async Task<IEnumerable<Prescription>> GetAllPrescriptionsAsync(int? doctorId)
+    public async Task<IEnumerable<PrescriptionReadDto>> GetAllPrescriptionsAsync(int? doctorId)
     {
         await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
         await connection.OpenAsync();
@@ -49,7 +52,7 @@ public class PrescriptionRepository : IPrescriptionRepository
             throw new NotFoundException("No Prescriptions Found");
         }
 
-        var prescriptionsRead = new List<Prescription>();
+        var prescriptionsRead = new List<PrescriptionReadDto>();
 
         var prescriptionOrdinal = reader.GetOrdinal("IdPrescription");
         var dateOrdinal = reader.GetOrdinal("Date");
@@ -64,7 +67,7 @@ public class PrescriptionRepository : IPrescriptionRepository
             DateTime dueDate = reader.GetDateTime(dueDateOrdinal);
             String? patientName = reader.GetString(lastNameOrdinal);
             String? doctorName = reader.GetString(doctorNameOrdinal);
-            prescriptionsRead.Add(new Prescription{IdPrescription = prescriptionId,Date = date,DueDate = dueDate,PatientName = patientName,DoctorName = doctorName});
+            prescriptionsRead.Add(new PrescriptionReadDto{IdPrescription = prescriptionId,Date = date,DueDate = dueDate,PatientName = patientName,DoctorName = doctorName});
         }
 
         return prescriptionsRead;
@@ -76,7 +79,45 @@ public class PrescriptionRepository : IPrescriptionRepository
         await connection.OpenAsync();
         var query = "SELECT * FROM Doctor WHERE @IdDoctor = IdDoctor";
         await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@IdDoctor", doctorId);
         var rowsAffected = await command.ExecuteNonQueryAsync();
         return rowsAffected > 0;
+    }
+
+    public async Task<bool> CheckIfPatientExistsAsync(int patientId)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        await connection.OpenAsync();
+        var query = "SELECT * FROM Patient WHERE @IdPatient = IdDoctor";
+        await using var command = new SqlCommand(query, connection);
+        command.Parameters.AddWithValue("@IdPatient", patientId);
+        var rowsAffected = await command.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
+    }
+
+    public async Task<Prescription> InsertPrescription(PrescriptionDto dto)
+    {
+        await using var connection = new SqlConnection(_configuration["ConnectionString:DefaultConnection"]);
+        await connection.OpenAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        try
+        {
+            var query = "INSERT INTO Prescription(Date, DueDate, IdPatient, IdDoctor) OUTPUT Inserted.IdPrescription VALUES @Date, @DueDate, @IdPatient, @IdDoctor";
+            await using var command = new SqlCommand(query, connection);
+            command.Transaction = (SqlTransaction)transaction;
+            command.Parameters.Clear();
+            command.Parameters.AddWithValue("@Date", dto.Date);
+            command.Parameters.AddWithValue("@DueDate", dto.DueDate);
+            command.Parameters.AddWithValue("@IdPatient", dto.IdPatient);
+            command.Parameters.AddWithValue("@IdDoctor", dto.IdDoctor);
+            var PrescId = (int) await command.ExecuteScalarAsync();
+            await transaction.CommitAsync();
+            return new Prescription{IdPrescription = PrescId, Date = dto.Date, DueDate = dto.DueDate, PatientId = dto.IdPatient, DoctorId = dto.IdDoctor};
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw new ConflictException("Transaction failed. Rollback initiated");
+        }
     }
 }

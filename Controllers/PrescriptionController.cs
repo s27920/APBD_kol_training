@@ -1,3 +1,5 @@
+using kolWebApp.Dtos;
+using kolWebApp.Exceptions;
 using kolWebApp.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,6 +37,24 @@ public class PrescriptionController : ControllerBase
         {
             return NotFound(e);
         }
-        
+    }
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> InsertPrescription([FromBody] PrescriptionDto dto)
+    {
+        try
+        {
+            return Ok(await _prescriptionService.InsertPrescription(dto));
+        }
+        catch (NotFoundException e)
+        {
+            return NotFound(e);
+        }
+        catch (ConflictException e)
+        {
+            return Conflict(e);
+        }
     }
 }

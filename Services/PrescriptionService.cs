@@ -1,3 +1,4 @@
+using kolWebApp.Dtos;
 using kolWebApp.Exceptions;
 using kolWebApp.Repositories;
 
@@ -6,8 +7,9 @@ using MOdels;
 
 public interface IPrescriptionService
 {
-    public Task<IEnumerable<Prescription>> GetAllPrescriptionAsync();
-    public Task<IEnumerable<Prescription>> GetDoctorsPrescriptionsAsync(int id);
+    public Task<IEnumerable<PrescriptionReadDto>> GetAllPrescriptionAsync();
+    public Task<IEnumerable<PrescriptionReadDto>> GetDoctorsPrescriptionsAsync(int id);
+    public Task<Prescription> InsertPrescription(PrescriptionDto dto);
 }
 
 public class PrescriptionService : IPrescriptionService
@@ -19,17 +21,32 @@ public class PrescriptionService : IPrescriptionService
         _repository = repository;
     }
 
-    public async Task<IEnumerable<Prescription>> GetAllPrescriptionAsync()
+    public async Task<IEnumerable<PrescriptionReadDto>> GetAllPrescriptionAsync()
     {
         return await _repository.GetAllPrescriptionsAsync(null);
     }
 
-    public async Task<IEnumerable<Prescription>> GetDoctorsPrescriptionsAsync(int id)
+    public async Task<IEnumerable<PrescriptionReadDto>> GetDoctorsPrescriptionsAsync(int id)
     {
-        if (!_repository.CheckIfDoctorExistsAsync(id).Result)
+        if (!await _repository.CheckIfDoctorExistsAsync(id))
         {
             throw new NotFoundException("No doctor with such Id found");
         }
         return await _repository.GetAllPrescriptionsAsync(id);
+    }
+
+    public async Task<Prescription> InsertPrescription(PrescriptionDto dto)
+    {
+        if (!await _repository.CheckIfDoctorExistsAsync(dto.IdDoctor))
+        {
+            throw new NotFoundException("No doctor with such Id found");
+        }
+        if (!await _repository.CheckIfPatientExistsAsync(dto.IdPatient))
+        {
+            throw new NotFoundException("No patient with such Id found");
+        }
+
+        return await _repository.InsertPrescription(dto);
+
     }
 }
